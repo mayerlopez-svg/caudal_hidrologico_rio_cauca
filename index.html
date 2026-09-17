@@ -1,940 +1,675 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-slate-900 text-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Caudal Hidrologico - Ri­o Cauca</title>
+    <title>Simulador de Caudal - RÃ­o Cauca (EstaciÃ³n La Virginia)</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
         }
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #38bdf8, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        /* Custom scrollbars */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-    </style>
+    </script>
 </head>
-<body class="min-h-screen pb-10">
+<body class="min-h-screen bg-slate-950 font-sans text-slate-200 antialiased flex flex-col">
 
-    <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-50 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
-                    <i class="fa-solid font-bold fa-water text-xl"></i>
+                <div class="p-2 bg-sky-500/10 border border-sky-500/30 rounded-xl text-sky-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold text-white tracking-wide">Simulador Hidrologico - Ri­o Cauca</h1>
-                    <p class="text-xs text-slate-400">ModelaciÃ³n DinÃ¡mica de Caudal & IntegraciÃ³n NumÃ©rica (EstaciÃ³n Juanchito / Valle)</p>
+                    <h1 class="text-lg font-bold text-white tracking-tight">Simulador HidrolÃ³gico de Caudal</h1>
+                    <p class="text-xs text-slate-400">RÃ­o Cauca â€” EstaciÃ³n La Virginia, Risaralda</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 text-xs">
-                <span class="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    Estado: Normal Monitoreado
+            <div class="flex items-center gap-3 text-xs">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+                    Estado del RÃ­o: Normal
                 </span>
-                <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
-                    <i class="fa-solid fa-clock text-blue-400 mr-1"></i> Ventana: 36 Horas
-                </span>
+                <button onclick="resetearDatos()" class="px-3 py-1.5 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition border border-slate-700">
+                    Restablecer
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-        <section class="glass-panel p-5 rounded-2xl">
-            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-4">
-                <div class="flex items-center gap-3">
-                    <button id="playBtn" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold rounded-xl transition flex items-center gap-2 shadow-lg shadow-blue-600/30">
-                        <i class="fa-solid fa-play" id="playIcon"></i>
-                        <span id="playText">Iniciar SimulaciÃ³n</span>
-                    </button>
-                    <button id="resetBtn" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl border border-slate-700 transition">
-                        <i class="fa-solid fa-rotate-left mr-1"></i> Reiniciar
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-4 flex-1 max-w-xl bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Tiempo (t):</span>
-                    <input type="range" id="timeSlider" min="0" max="36" step="0.1" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
-                    <span id="currentTimeDisplay" class="font-mono text-base font-bold text-blue-400 min-w-[70px] text-right">0.0 h</span>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <label class="text-xs text-slate-400">Escenario:</label>
-                    <select id="scenarioSelect" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-xl px-3 py-2 font-medium focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="baseline">Datos Reales Observados</option>
-                        <option value="flood">+25% Incremento por Tormenta</option>
-                        <option value="drought">-15% ReducciÃ³n Estacional</option>
-                        <option value="pulse">Avenida Torrencial (Pico $t=18$h)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-400 border-t border-slate-800/80 pt-3">
-                <div><i class="fa-solid fa-arrow-down-short-wide text-blue-400 mr-1"></i> Caudal MÃ­nimo: <span id="statQMin" class="text-slate-200 font-semibold">-- mÂ³/s</span></div>
-                <div><i class="fa-solid fa-arrow-up-wide-short text-amber-400 mr-1"></i> Caudal MÃ¡ximo: <span id="statQMax" class="text-slate-200 font-semibold">-- mÂ³/s</span></div>
-                <div><i class="fa-solid fa-calculator text-emerald-400 mr-1"></i> Caudal Promedio: <span id="statQAvg" class="text-slate-200 font-semibold">-- mÂ³/s</span></div>
-                <div><i class="fa-solid fa-database text-cyan-400 mr-1"></i> Vol. Acumulado 36h: <span id="statVolTotal" class="text-slate-200 font-semibold">-- HmÂ³</span></div>
-            </div>
-        </section>
-
+        <!-- KPI Metrics Cards -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Card 1: Instantaneous Flow Rate -->
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-10 text-blue-500">
-                    <i class="fa-solid fa-gauge-high text-7xl"></i>
+            <!-- Card 1: Caudal MÃ¡ximo -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
+                <div class="flex justify-between items-start text-slate-400 mb-2">
+                    <span class="text-xs font-medium uppercase tracking-wider">Caudal Pico Reg.</span>
+                    <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                 </div>
-                <div class="text-xs font-medium text-slate-400 mb-1">Caudal InstantÃ¡neo $Q(t)$</div>
                 <div class="flex items-baseline gap-2">
-                    <span id="kpiQ" class="text-3xl font-extrabold text-white font-mono">1162.18</span>
-                    <span class="text-sm font-semibold text-blue-400">mÂ³/s</span>
+                    <span id="kpiMax" class="text-2xl font-bold text-white">1265.22</span>
+                    <span class="text-xs text-slate-400">mÂ³/s</span>
                 </div>
-                <div class="mt-3 flex items-center gap-2 text-xs">
-                    <span id="qTrendBadge" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
-                        <i class="fa-solid fa-minus text-slate-400 mr-1"></i>0.0 mÂ³/sÂ²
-                    </span>
-                    <span class="text-slate-500">VariaciÃ³n Temporal</span>
-                </div>
+                <p class="text-xs text-slate-500 mt-1">Registrado a las 30h (12:00 PM DÃ­a 2)</p>
             </div>
 
-            <!-- Card 2: Estimated Water Level -->
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-10 text-cyan-500">
-                    <i class="fa-solid fa-water text-7xl"></i>
+            <!-- Card 2: Caudal Medio -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
+                <div class="flex justify-between items-start text-slate-400 mb-2">
+                    <span class="text-xs font-medium uppercase tracking-wider">Caudal Promedio</span>
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 </div>
-                <div class="text-xs font-medium text-slate-400 mb-1">Nivel Estimado del RÃ­o $h(t)$</div>
                 <div class="flex items-baseline gap-2">
-                    <span id="kpiDepth" class="text-3xl font-extrabold text-white font-mono">4.12</span>
-                    <span class="text-sm font-semibold text-cyan-400">m</span>
+                    <span id="kpiAvg" class="text-2xl font-bold text-white">1191.79</span>
+                    <span class="text-xs text-slate-400">mÂ³/s</span>
                 </div>
-                <div class="mt-3 flex items-center text-xs text-slate-400 gap-1">
-                    <i class="fa-solid fa-ruler-vertical text-cyan-400"></i> CalibraciÃ³n Manning ($B=90$m, $n=0.032$)
-                </div>
+                <p class="text-xs text-slate-500 mt-1">En el perÃ­odo histÃ³rico de 36h</p>
             </div>
 
-            <!-- Card 3: Flow Velocity -->
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-10 text-emerald-500">
-                    <i class="fa-solid fa-bolt text-7xl"></i>
+            <!-- Card 3: Volumen Acumulado -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
+                <div class="flex justify-between items-start text-slate-400 mb-2">
+                    <span class="text-xs font-medium uppercase tracking-wider">Volumen Acumulado</span>
+                    <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                 </div>
-                <div class="text-xs font-medium text-slate-400 mb-1">Velocidad Media del Flujo $V(t)$</div>
                 <div class="flex items-baseline gap-2">
-                    <span id="kpiVelocity" class="text-3xl font-extrabold text-white font-mono">3.14</span>
-                    <span class="text-sm font-semibold text-emerald-400">m/s</span>
+                    <span id="kpiVol" class="text-2xl font-bold text-teal-400">153.72</span>
+                    <span class="text-xs text-slate-400">HmÂ³</span>
                 </div>
-                <div class="mt-3 flex items-center text-xs text-slate-400 gap-1">
-                    <i class="fa-solid fa-wind text-emerald-400"></i> RÃ©gimen SubcrÃ­tico ($Fr < 1.0$)
-                </div>
+                <p id="kpiVolM3" class="text-xs text-slate-500 mt-1">153,719,640 mÂ³ procesados</p>
             </div>
 
-            <!-- Card 4: Integrated Volume -->
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 opacity-10 text-purple-500">
-                    <i class="fa-solid fa-box-archive text-7xl"></i>
+            <!-- Card 4: Alerta de Umbral -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
+                <div class="flex justify-between items-start text-slate-400 mb-2">
+                    <span class="text-xs font-medium uppercase tracking-wider">Nivel de Riesgo</span>
+                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 </div>
-                <div class="text-xs font-medium text-slate-400 mb-1">Volumen Acumulado hasta $t$</div>
                 <div class="flex items-baseline gap-2">
-                    <span id="kpiVolume" class="text-3xl font-extrabold text-white font-mono">0.00</span>
-                    <span class="text-sm font-semibold text-purple-400">HmÂ³</span>
+                    <span id="kpiRisk" class="text-xl font-bold text-emerald-400">AMARILLA PREVENTIVA</span>
                 </div>
-                <div class="mt-3 text-xs text-slate-400 flex items-center gap-1">
-                    <i class="fa-solid fa-square-root-variable text-purple-400"></i> IntegraciÃ³n Trapezoidal $\int Q dt$
-                </div>
+                <p class="text-xs text-slate-500 mt-1">Umbral alerta roja: 1500 mÂ³/s</p>
             </div>
         </section>
 
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            <!-- Hydrograph Chart (8 cols) -->
-            <div class="lg:col-span-7 glass-panel p-5 rounded-2xl flex flex-col justify-between">
+            <!-- Control Panel (Sidebar) -->
+            <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-6 flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="text-base font-bold text-white flex items-center gap-2">
-                                <i class="fa-chart-line text-blue-400"></i> Hidrograma de Caudal $Q(t)$
-                            </h2>
-                            <p class="text-xs text-slate-400">Puntos medidos e interpolaciÃ³n Spline CÃºbica en las 36 horas</p>
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                        ParÃ¡metros de SimulaciÃ³n
+                    </h2>
+
+                    <!-- Control: Ruido / Incertidumbre -->
+                    <div class="space-y-2 mb-5">
+                        <div class="flex justify-between items-center text-xs">
+                            <label for="noiseInput" class="font-medium text-slate-300">Incertidumbre / Ruido (mÂ³/s):</label>
+                            <span id="noiseVal" class="font-mono text-sky-400 font-bold text-sm bg-sky-950 px-2 py-0.5 rounded border border-sky-800">55</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="flex items-center gap-1 text-[11px] text-blue-400 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
-                                <span class="w-2 h-2 rounded-full bg-blue-500"></span> Curva Simulada
-                            </span>
-                            <span class="flex items-center gap-1 text-[11px] text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
-                                <span class="w-2 h-2 rounded-full bg-amber-400"></span> Datos Adjuntos
-                            </span>
-                        </div>
+                        <input type="range" id="noiseInput" min="0" max="150" step="5" value="55"
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                               oninput="document.getElementById('noiseVal').innerText = this.value">
+                        <p class="text-[11px] text-slate-500">DesviaciÃ³n estÃ¡ndar $\sigma$ aplicada en la proyecciÃ³n Monte Carlo.</p>
                     </div>
-                    <div class="h-[320px] w-full relative">
-                        <canvas id="hydrographCanvas"></canvas>
+
+                    <!-- Control: Modelo MatemÃ¡tico -->
+                    <div class="space-y-2 mb-5">
+                        <label for="modelSelect" class="block text-xs font-medium text-slate-300">Modelo de ProyecciÃ³n:</label>
+                        <select id="modelSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                            <option value="polynomial">Ajuste PolinÃ³mico CuadrÃ¡tico ($Q = a t^2 + b t + c$)</option>
+                            <option value="linear_extrap">ExtrapolaciÃ³n Lineal de Tendencia Final</option>
+                            <option value="sinusoidal">Modelo Ciclo Diario (HarmÃ³nico Hydro-Sinusoidal)</option>
+                        </select>
+                    </div>
+
+                    <!-- Control: Opciones de VisualizaciÃ³n -->
+                    <div class="space-y-3 mb-5 border-t border-slate-800 pt-4">
+                        <span class="block text-xs font-medium text-slate-400 uppercase tracking-wider">Opciones de Capas</span>
+                        <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="chkLinearInterpolation" checked class="rounded border-slate-700 text-sky-600 focus:ring-sky-500 bg-slate-800">
+                            InterpolaciÃ³n Lineal por Tramos
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="chkPolyFit" checked class="rounded border-slate-700 text-sky-600 focus:ring-sky-500 bg-slate-800">
+                            Curva Ajuste PolinÃ³mico ($R^2 \approx 0.82$)
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="chkConfidenceBand" checked class="rounded border-slate-700 text-sky-600 focus:ring-sky-500 bg-slate-800">
+                            Banda de Confianza EstocÃ¡stica ($\pm 1\sigma$)
+                        </label>
+                    </div>
+
+                    <!-- Control: NÃºmero de Realizaciones Monte Carlo -->
+                    <div class="space-y-2 mb-5">
+                        <div class="flex justify-between items-center text-xs">
+                            <label for="mcRuns" class="font-medium text-slate-300">Iteraciones Monte Carlo:</label>
+                            <span id="mcRunsVal" class="font-mono text-slate-400 font-medium">10 trayectorias</span>
+                        </div>
+                        <input type="range" id="mcRuns" min="1" max="30" step="1" value="10"
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                               oninput="document.getElementById('mcRunsVal').innerText = this.value + ' trayectorias'">
                     </div>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex flex-wrap justify-between items-center gap-2">
-                    <span><i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> La zona sombreada representa el volumen total discurriendo por el cauce.</span>
-                    <span id="interpolationInfo" class="font-mono text-slate-300">Spline MonÃ³tona Activa</span>
-                </div>
+                <!-- Simulation Trigger Button -->
+                <button onclick="ejecutarSimulacion()" class="w-full py-3 px-4 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-semibold rounded-xl text-xs tracking-wider uppercase transition shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Ejecutar SimulaciÃ³n
+                </button>
             </div>
 
-            <!-- River Channel Cross-Section & Dynamic Particle Animation (5 cols) -->
-            <div class="lg:col-span-5 glass-panel p-5 rounded-2xl flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-base font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-water text-cyan-400"></i> SecciÃ³n Transversal y Flujo
-                        </h2>
-                        <span class="text-xs bg-slate-800 text-cyan-300 px-2 py-0.5 rounded border border-slate-700">Canal RÃ­o Cauca</span>
-                    </div>
-                    <p class="text-xs text-slate-400 mb-3">SimulaciÃ³n visual de la lÃ¡mina de agua y partÃ­culas a velocidad $V(t)$</p>
-
-                    <div class="relative w-full h-[280px] bg-slate-900/90 rounded-xl overflow-hidden border border-slate-800">
-                        <canvas id="riverSimulationCanvas" class="w-full h-full block"></canvas>
-                        
-                        <!-- Overlay Water Metrics -->
-                        <div class="absolute bottom-2 left-2 right-2 flex justify-between items-center text-[11px] bg-slate-950/80 p-2 rounded-lg backdrop-blur border border-slate-800">
-                            <span class="text-slate-300">Ancho ($B$): <strong class="text-white">90.0 m</strong></span>
-                            <span class="text-slate-300">Ãrea Mojada ($A$): <strong id="canvasArea" class="text-cyan-400">-- mÂ²</strong></span>
-                            <span class="text-slate-300">PerÃ­metro ($P$): <strong id="canvasPerimeter" class="text-emerald-400">-- m</strong></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-slate-900/50 p-2 rounded-lg border border-slate-800/80">
-                        <span class="text-slate-400 block">Pendiente de Cauce ($S$):</span>
-                        <span class="text-slate-200 font-bold font-mono">0.0003 m/m</span>
-                    </div>
-                    <div class="bg-slate-900/50 p-2 rounded-lg border border-slate-800/80">
-                        <span class="text-slate-400 block">Rugosidad Manning ($n$):</span>
-                        <span class="text-slate-200 font-bold font-mono">0.032 (Grava/Canto)</span>
-                    </div>
-                </div>
-            </div>
-
-        </section>
-
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-            <!-- Raw Data & Interpolation Table (7 cols) -->
-            <div class="lg:col-span-7 glass-panel p-5 rounded-2xl">
-                <div class="flex items-center justify-between mb-4">
+            <!-- Main Interactive Chart Screen -->
+            <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                     <div>
-                        <h2 class="text-base font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-table text-amber-400"></i> Registros Observados e IntegraciÃ³n Trapezoidal
-                        </h2>
-                        <p class="text-xs text-slate-400">Tabla de datos suministrados con cÃ¡lculo del volumen por tramo</p>
+                        <h2 class="text-base font-semibold text-white">Hidrograma del Caudal (mÂ³/s vs Tiempo)</h2>
+                        <p class="text-xs text-slate-400">Datos histÃ³ricos continuos y proyecciones estocÃ¡sticas en tiempo real</p>
                     </div>
-                    <button id="exportCsvBtn" class="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-csv text-emerald-400"></i> Exportar CSV
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="flex items-center gap-1 text-slate-400"><span class="w-3 h-0.5 bg-sky-500"></span> HistÃ³rico</span>
+                        <span class="flex items-center gap-1 text-slate-400"><span class="w-3 h-0.5 bg-amber-500 border border-dashed"></span> ProyecciÃ³n</span>
+                    </div>
+                </div>
+
+                <!-- Canvas Chart Area -->
+                <div class="relative w-full h-[360px] sm:h-[420px]">
+                    <canvas id="caudalChart"></canvas>
+                </div>
+
+                <div class="mt-3 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Usa la rueda del mouse o gesto tÃ¡ctil para interactuar con la grÃ¡fica.
+                    </span>
+                    <button onclick="descargarGrafica()" class="text-sky-400 hover:text-sky-300 font-medium hover:underline">
+                        Exportar PNG
                     </button>
                 </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
-                            <tr>
-                                <th class="p-3">Tiempo $t$ (h)</th>
-                                <th class="p-3">Caudal $Q$ (mÂ³/s)</th>
-                                <th class="p-3">$\Delta t$ (s)</th>
-                                <th class="p-3">Volumen Tramo ($m^3$)</th>
-                                <th class="p-3">Volumen Acum. ($Hm^3$)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dataTableBody" class="divide-y divide-slate-800/60 font-mono">
-                            <!-- Populated dynamically via JS -->
-                        </tbody>
-                        <tfoot class="bg-slate-900/90 font-bold text-white border-t-2 border-slate-700">
-                            <tr>
-                                <td class="p-3">Total / Resumen</td>
-                                <td class="p-3 text-blue-400" id="tableAvgQ">-- mÂ³/s</td>
-                                <td class="p-3">129,600 s</td>
-                                <td class="p-3 text-purple-400" id="tableTotalM3">-- mÂ³</td>
-                                <td class="p-3 text-emerald-400" id="tableTotalHm3">-- HmÂ³</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
             </div>
+        </div>
 
-            <!-- Hydrological Context & Manning Hydraulic Parameters (5 cols) -->
-            <div class="lg:col-span-5 glass-panel p-5 rounded-2xl flex flex-col justify-between">
-                <div>
-                    <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-sliders text-emerald-400"></i> ParÃ¡metros del Canal del RÃ­o
-                    </h2>
-                    <p class="text-xs text-slate-400 mb-4">Ajuste interactivo de la geometrÃ­a hidrÃ¡ulica (EcuaciÃ³n de Manning)</p>
+        <!-- Detailed Equations & Data Table Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                    <div class="space-y-4 text-xs">
-                        <div>
-                            <div class="flex justify-between mb-1 text-slate-300">
-                                <span>Ancho de Solera / Cauce ($B$):</span>
-                                <span id="paramBVal" class="font-bold text-blue-400">90 m</span>
-                            </div>
-                            <input type="range" id="paramB" min="50" max="150" value="90" step="5" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
-                        </div>
+            <!-- Equations & Formulation Tab -->
+            <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Ecuaciones de InterpolaciÃ³n
+                </h3>
 
-                        <div>
-                            <div class="flex justify-between mb-1 text-slate-300">
-                                <span>Coeficiente de Rugosidad ($n$):</span>
-                                <span id="paramNVal" class="font-bold text-emerald-400">0.032</span>
-                            </div>
-                            <input type="range" id="paramN" min="0.020" max="0.065" value="0.032" step="0.001" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
-                        </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    FÃ³rmula base de interpolaciÃ³n lineal por tramos para $0 \le t \le \Delta t$:
+                    <code class="block my-2 p-2 bg-slate-950 rounded border border-slate-800 text-sky-300 font-mono text-[11px]">
+                        f(t) = Qâ‚€ + [(Qâ‚ - Qâ‚€) / Î”t] Â· (t - tâ‚€)
+                    </code>
+                </p>
 
-                        <div>
-                            <div class="flex justify-between mb-1 text-slate-300">
-                                <span>Pendiente Longitudinal ($S$):</span>
-                                <span id="paramSVal" class="font-bold text-amber-400">0.0003 m/m</span>
-                            </div>
-                            <input type="range" id="paramS" min="0.0001" max="0.0010" value="0.0003" step="0.00005" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500">
-                        </div>
+                <!-- Piecewise equations table -->
+                <div class="space-y-2 text-xs font-mono max-h-56 overflow-y-auto pr-1">
+                    <div class="p-2 bg-slate-950/80 rounded border border-slate-800/80">
+                        <span class="text-slate-500">Tramo 1 (0h - 6h):</span><br>
+                        <span class="text-emerald-400">f(t) = 1162.18 + 1.8117 Â· t</span>
+                    </div>
+                    <div class="p-2 bg-slate-950/80 rounded border border-slate-800/80">
+                        <span class="text-slate-500">Tramo 2 (6h - 12h):</span><br>
+                        <span class="text-emerald-400">f(t) = 1173.05 - 10.7033 Â· (t - 6)</span>
+                    </div>
+                    <div class="p-2 bg-slate-950/80 rounded border border-slate-800/80">
+                        <span class="text-slate-500">Tramo 3 (12h - 24h):</span><br>
+                        <span class="text-emerald-400">f(t) = 1108.83 + 8.7083 Â· (t - 12)</span>
+                    </div>
+                    <div class="p-2 bg-slate-950/80 rounded border border-slate-800/80">
+                        <span class="text-slate-500">Tramo 4 (24h - 30h):</span><br>
+                        <span class="text-emerald-400">f(t) = 1213.33 + 8.6483 Â· (t - 24)</span>
+                    </div>
+                    <div class="p-2 bg-slate-950/80 rounded border border-slate-800/80">
+                        <span class="text-slate-500">Tramo 5 (30h - 36h):</span><br>
+                        <span class="text-emerald-400">f(t) = 1265.22 - 6.1867 Â· (t - 30)</span>
                     </div>
                 </div>
 
-                <div class="mt-5 p-3.5 bg-slate-900/80 rounded-xl border border-slate-800 text-xs space-y-2">
-                    <div class="font-bold text-slate-200 flex items-center gap-1.5">
-                        <i class="fa-solid fa-map-pin text-red-400"></i> Contexto HidrolÃ³gico RÃ­o Cauca
-                    </div>
-                    <p class="text-slate-400 leading-relaxed text-[11.5px]">
-                        Los caudales (~1100 a 1265 mÂ³/s) corresponden a un rÃ©gimen medio-alto en el valle geogrÃ¡fico del RÃ­o Cauca (Cali / Juanchito). Un volumen acumulado superior a <strong>150 HmÂ³</strong> en 36 horas refleja la alta capacidad reguladora de la cuenca.
+                <div class="pt-2 border-t border-slate-800 text-xs text-slate-400">
+                    <span class="font-semibold text-slate-300">Modelo Ajustado Global:</span>
+                    <p class="font-mono text-amber-400 text-[11px] mt-1 bg-slate-950 p-2 rounded border border-slate-800">
+                        Q(t) = 0.09259Â·tÂ² - 0.43694Â·t + 1154.09
                     </p>
                 </div>
             </div>
 
-        </section>
+            <!-- Historical & Projected Data Table -->
+            <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            Tabla de Registros y Proyecciones
+                        </h3>
+                        <button onclick="exportarCSV()" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition">
+                            Exportar CSV
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                                <tr>
+                                    <th class="py-2.5 px-3">Fecha / Hora</th>
+                                    <th class="py-2.5 px-3">Tiempo (h)</th>
+                                    <th class="py-2.5 px-3">Tipo</th>
+                                    <th class="py-2.5 px-3 text-right">Caudal (mÂ³/s)</th>
+                                    <th class="py-2.5 px-3 text-right">Volumen Segmento (HmÂ³)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody" class="divide-y divide-slate-800/60 font-mono">
+                                <!-- Dynamically populated via Javascript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                    <span>EstaciÃ³n HidromÃ©trica: La Virginia - Risaralda</span>
+                    <span>Fuente de datos: IDEAM / Modelo SimulaciÃ³n</span>
+                </div>
+            </div>
+
+        </div>
 
     </main>
 
     <script>
-        // Provided dataset
-        const rawData = [
-            { t: 0,  q: 1162.18 },
-            { t: 6,  q: 1173.05 },
-            { t: 12, q: 1108.83 },
-            { t: 24, q: 1213.33 },
-            { t: 30, q: 1265.22 },
-            { t: 36, q: 1228.10 }
+        // Data Store
+        const datasetHistorico = [
+            { fecha: '24-08 06:00', t: 0,  caudal: 1162.18 },
+            { fecha: '24-08 12:00', t: 6,  caudal: 1173.05 },
+            { fecha: '24-08 18:00', t: 12, caudal: 1108.83 },
+            { fecha: '25-08 06:00', t: 24, caudal: 1213.33 },
+            { fecha: '25-08 12:00', t: 30, caudal: 1265.22 },
+            { fecha: '25-08 18:00', t: 36, caudal: 1228.10 }
         ];
 
-        // Hydraulic parameters defaults
-        let hydraulicParams = {
-            B: 90,     // Channel width (meters)
-            n: 0.032,  // Manning roughness
-            S: 0.0003  // Longitudinal slope
-        };
+        const datasetProyeccionT = [
+            { fecha: '26-08 06:00', t: 48 },
+            { fecha: '26-08 12:00', t: 54 },
+            { fecha: '26-08 18:00', t: 60 }
+        ];
 
-        let currentScenario = 'baseline';
-        let currentTime = 0;
-        let isPlaying = false;
-        let animationFrameId = null;
-        let playbackSpeed = 1.0; // hours per step multiplier
+        // Polynomial Coefficients: f(t) = a*t^2 + b*t + c
+        const POLY_A = 0.09259;
+        const POLY_B = -0.43694;
+        const POLY_C = 1154.09;
 
-        // Particles for canvas simulation
-        let particles = [];
-        const numParticles = 80;
+        let chartInstance = null;
+        let simulacionesActuales = [];
 
-        function getActiveData() {
-            return rawData.map(d => {
-                let factor = 1.0;
-                let offset = 0;
-                if (currentScenario === 'flood') factor = 1.25;
-                if (currentScenario === 'drought') factor = 0.85;
-                
-                let qVal = d.q * factor;
-                
-                if (currentScenario === 'pulse') {
-                    // Add a synthetic pulse peaked at t=18
-                    const pulse = 250 * Math.exp(-Math.pow(d.t - 18, 2) / 36);
-                    qVal += pulse;
-                }
-                return { t: d.t, q: qVal };
+        // Box-Muller Gaussian Noise Generator
+        function generarRuidoGaussiano(stdDev) {
+            let u1 = Math.random();
+            while (u1 === 0) u1 = Math.random(); // Prevent log(0)
+            let u2 = Math.random();
+            let z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            return z * stdDev;
+        }
+
+        // Calculate expected base model flow at time t
+        function calcularModeloBase(t, tipoModelo) {
+            if (tipoModelo === 'polynomial') {
+                return (POLY_A * t * t) + (POLY_B * t) + POLY_C;
+            } else if (tipoModelo === 'linear_extrap') {
+                // Slope between t=30 and t=36
+                const last = datasetHistorico[datasetHistorico.length - 1];
+                const prev = datasetHistorico[datasetHistorico.length - 2];
+                const m = (last.caudal - prev.caudal) / (last.t - prev.t);
+                return last.caudal + m * (t - last.t);
+            } else if (tipoModelo === 'sinusoidal') {
+                // Harmonic 24-hour cycle around 1200 m3/s
+                return 1200 + 60 * Math.sin((t * Math.PI) / 12) + (t * 0.5);
+            }
+            return 1200;
+        }
+
+        // Trapezoidal integration for volume calculation
+        function calcularVolumenAcumulado(puntos) {
+            let volTotalM3 = 0;
+            let detallesSegmento = [];
+
+            for (let i = 0; i < puntos.length - 1; i++) {
+                let p1 = puntos[i];
+                let p2 = puntos[i + 1];
+                let dtSegundos = (p2.t - p1.t) * 3600;
+                let caudalMedio = (p1.caudal + p2.caudal) / 2;
+                let volSegM3 = caudalMedio * dtSegundos;
+                volTotalM3 += volSegM3;
+                detallesSegmento.push(volSegM3 / 1e6); // in Hm3
+            }
+
+            return { volTotalM3, volHm3: volTotalM3 / 1e6, detallesSegmento };
+        }
+
+        function ejecutarSimulacion() {
+            const noiseStd = parseFloat(document.getElementById('noiseInput').value);
+            const tipoModelo = document.getElementById('modelSelect').value;
+            const mcRunsCount = parseInt(document.getElementById('mcRuns').value);
+            const showLinear = document.getElementById('chkLinearInterpolation').checked;
+            const showPoly = document.getElementById('chkPolyFit').checked;
+            const showConfidence = document.getElementById('chkConfidenceBand').checked;
+
+            // Generate projected values Monte Carlo
+            const proyeccionesRuns = [];
+            for (let r = 0; r < mcRunsCount; r++) {
+                const runPuntos = datasetProyeccionT.map(p => {
+                    const base = calcularModeloBase(p.t, tipoModelo);
+                    const ruido = generarRuidoGaussiano(noiseStd);
+                    return parseFloat(Math.max(800, base + ruido).toFixed(2));
+                });
+                proyeccionesRuns.push(runPuntos);
+            }
+
+            // Average projection path & Confidence boundaries
+            const proyeccionPromedio = datasetProyeccionT.map((p, idx) => {
+                const sum = proyeccionesRuns.reduce((acc, run) => acc + run[idx], 0);
+                return parseFloat((sum / mcRunsCount).toFixed(2));
             });
-        }
 
-        // Hermite Monotone Cubic Spline to avoid overshoots
-        function createSpline(data) {
-            const x = data.map(d => d.t);
-            const y = data.map(d => d.q);
-            const n = x.length;
+            const bandUpper = datasetProyeccionT.map((p, idx) => {
+                const base = proyeccionPromedio[idx];
+                return parseFloat((base + noiseStd).toFixed(2));
+            });
 
-            const dx = [];
-            const dy = [];
-            const ms = [];
+            const bandLower = datasetProyeccionT.map((p, idx) => {
+                const base = proyeccionPromedio[idx];
+                return parseFloat((base - noiseStd).toFixed(2));
+            });
 
-            for (let i = 0; i < n - 1; i++) {
-                dx.push(x[i + 1] - x[i]);
-                dy.push(y[i + 1] - y[i]);
-                ms.push(dy[i] / dx[i]);
-            }
-
-            const c1s = [ms[0]];
-            for (let i = 0; i < ms.length - 1; i++) {
-                const m = ms[i];
-                const nextM = ms[i + 1];
-                if (m * nextM <= 0) {
-                    c1s.push(0);
-                } else {
-                    const commondx = dx[i] + dx[i + 1];
-                    c1s.push((3 * commondx) / ((commondx + dx[i + 1]) / m + (commondx + dx[i]) / nextM));
-                }
-            }
-            c1s.push(ms[ms.length - 1]);
-
-            return function(tVal) {
-                if (tVal <= x[0]) return y[0];
-                if (tVal >= x[n - 1]) return y[n - 1];
-
-                let i = 0;
-                while (i < x.length - 1 && x[i + 1] < tVal) {
-                    i++;
-                }
-
-                const h = dx[i];
-                const diff = tVal - x[i];
-                const t = diff / h;
-                const t2 = t * t;
-                const t3 = t2 * t;
-
-                const h00 = 2 * t3 - 3 * t2 + 1;
-                const h10 = t3 - 2 * t2 + t;
-                const h01 = -2 * t3 + 3 * t2;
-                const h11 = t3 - t2;
-
-                return h00 * y[i] + h10 * h * c1s[i] + h01 * y[i + 1] + h11 * h * c1s[i + 1];
-            };
-        }
-
-        // Solves Manning Equation: Q = (1/n) * A * R^(2/3) * S^(1/2) for rectangular channel
-        // A = B * h, P = B + 2h, R = (B * h) / (B + 2h)
-        function solveDepth(Q, B, n, S) {
-            let h = 3.0; // initial guess
-            const k = (n * Q) / Math.sqrt(S); // A * R^(2/3) = k
-
-            // Newton-Raphson iteration
-            for (let iter = 0; iter < 15; iter++) {
-                const A = B * h;
-                const P = B + 2 * h;
-                const R = A / P;
-                const R_23 = Math.pow(R, 2/3);
-                
-                const f = A * R_23 - k;
-                if (Math.abs(f) < 1e-4) break;
-
-                // Derivative df/dh
-                const dA = B;
-                const dP = 2;
-                const dR = (B * P - A * dP) / (P * P);
-                const df = dA * R_23 + A * (2/3) * Math.pow(R, -1/3) * dR;
-
-                h = h - f / df;
-                if (h <= 0.1) h = 0.1;
-            }
-            return h;
-        }
-
-        function calculateCumulativeVolume(tTarget) {
-            const activeData = getActiveData();
-            const spline = createSpline(activeData);
-
-            let totalVolSeconds = 0; // mÂ³
-            const step = 0.05; // small time steps in hours
-
-            for (let t = 0; t < tTarget; t += step) {
-                const q1 = spline(t);
-                const q2 = spline(Math.min(t + step, tTarget));
-                const dtSeconds = (Math.min(t + step, tTarget) - t) * 3600;
-                totalVolSeconds += 0.5 * (q1 + q2) * dtSeconds;
-            }
-
-            return totalVolSeconds; // in mÂ³
-        }
-
-        let hydroChart = null;
-
-        function initChart() {
-            const ctx = document.getElementById('hydrographCanvas').getContext('2d');
+            // Prepare chart labels and data
+            const labelsAll = [...datasetHistorico.map(h => h.fecha), ...datasetProyeccionT.map(p => p.fecha)];
             
-            // Build dense curve points for smooth rendering
-            const activeData = getActiveData();
-            const spline = createSpline(activeData);
-            const densePoints = [];
-            for (let t = 0; t <= 36; t += 0.2) {
-                densePoints.push({ x: Number(t.toFixed(1)), y: Number(spline(t).toFixed(2)) });
+            // Historical dataset
+            const dataHist = [...datasetHistorico.map(h => h.caudal), null, null, null];
+
+            // Polynomial fit line continuous for historical
+            const dataPolyFit = labelsAll.map((lbl, idx) => {
+                const tVal = idx < datasetHistorico.length ? datasetHistorico[idx].t : datasetProyeccionT[idx - datasetHistorico.length].t;
+                return parseFloat(calcularModeloBase(tVal, 'polynomial').toFixed(2));
+            });
+
+            // Primary projected path dataset
+            const lastHist = datasetHistorico[datasetHistorico.length - 1].caudal;
+            const dataProjMean = [
+                ...Array(datasetHistorico.length - 1).fill(null),
+                lastHist,
+                ...proyeccionPromedio
+            ];
+
+            const dataBandUpper = [
+                ...Array(datasetHistorico.length - 1).fill(null),
+                lastHist,
+                ...bandUpper
+            ];
+
+            const dataBandLower = [
+                ...Array(datasetHistorico.length - 1).fill(null),
+                lastHist,
+                ...bandLower
+            ];
+
+            // Build Chart Datasets Array
+            const chartDatasets = [
+                {
+                    label: 'Caudal HistÃ³rico Medido',
+                    data: dataHist,
+                    borderColor: '#0ea5e9', // Sky 500
+                    backgroundColor: '#0ea5e9',
+                    borderWidth: 3,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    tension: showLinear ? 0 : 0.2
+                },
+                {
+                    label: 'ProyecciÃ³n Promedio',
+                    data: dataProjMean,
+                    borderColor: '#f59e0b', // Amber 500
+                    backgroundColor: '#f59e0b',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    pointRadius: 5,
+                    tension: 0.1
+                }
+            ];
+
+            if (showPoly) {
+                chartDatasets.push({
+                    label: 'Modelo PolinÃ³mico Q(t)',
+                    data: dataPolyFit,
+                    borderColor: '#a855f7', // Purple 500
+                    borderWidth: 1.5,
+                    borderDash: [2, 2],
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.4
+                });
             }
 
-            const dataPoints = activeData.map(d => ({ x: d.t, y: d.q }));
+            if (showConfidence) {
+                chartDatasets.push({
+                    label: 'LÃ­mite Superior (+1Ïƒ)',
+                    data: dataBandUpper,
+                    borderColor: 'rgba(245, 158, 11, 0.2)',
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    fill: false
+                });
+                chartDatasets.push({
+                    label: 'Banda de Confianza EstocÃ¡stica',
+                    data: dataBandLower,
+                    borderColor: 'rgba(245, 158, 11, 0.2)',
+                    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    fill: '-1' // Fill to Upper Band
+                });
+            }
 
-            hydroChart = new Chart(ctx, {
+            // Render/Update Chart
+            if (chartInstance) chartInstance.destroy();
+
+            const ctx = document.getElementById('caudalChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    datasets: [
-                        {
-                            label: 'Caudal Interpolado Q(t)',
-                            data: densePoints,
-                            borderColor: '#38bdf8',
-                            borderWidth: 3,
-                            fill: true,
-                            backgroundColor: 'rgba(56, 189, 248, 0.12)',
-                            tension: 0.4,
-                            pointRadius: 0
-                        },
-                        {
-                            label: 'Datos Observados',
-                            data: dataPoints,
-                            borderColor: '#f59e0b',
-                            backgroundColor: '#fbbf24',
-                            borderWidth: 0,
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
-                            showLine: false
-                        },
-                        {
-                            label: 'Tiempo Actual (t)',
-                            data: [{ x: 0, y: spline(0) }],
-                            borderColor: '#ef4444',
-                            backgroundColor: '#ef4444',
-                            pointRadius: 7,
-                            pointStyle: 'rectRot',
-                            showLine: false
-                        }
-                    ]
+                    labels: labelsAll,
+                    datasets: chartDatasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: {
-                        mode: 'nearest',
+                        mode: 'index',
                         intersect: false
                     },
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            title: {
-                                display: true,
-                                text: 'Tiempo t (Horas)',
-                                color: '#94a3b8',
-                                font: { size: 11, weight: 'bold' }
-                            },
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#cbd5e1', stepSize: 6 },
-                            min: 0,
-                            max: 36
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Caudal Q (mÂ³/s)',
-                                color: '#94a3b8',
-                                font: { size: 11, weight: 'bold' }
-                            },
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#cbd5e1' }
-                        }
-                    },
                     plugins: {
-                        legend: { display: false },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#94a3b8',
+                                font: { size: 11, family: 'Inter' },
+                                boxWidth: 12
+                            }
+                        },
                         tooltip: {
-                            backgroundColor: '#1e293b',
-                            titleColor: '#38bdf8',
-                            bodyColor: '#f8fafc',
+                            backgroundColor: '#0f172a',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#cbd5e1',
                             borderColor: '#334155',
                             borderWidth: 1,
+                            padding: 10,
                             callbacks: {
                                 label: function(context) {
-                                    return `Caudal: ${context.parsed.y.toFixed(2)} mÂ³/s en t = ${context.parsed.x} h`;
+                                    if (context.raw !== null) {
+                                        return `${context.dataset.label}: ${context.raw} mÂ³/s`;
+                                    }
+                                    return '';
                                 }
                             }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'Caudal (mÂ³/s)', color: '#64748b', font: { size: 11 } },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' },
+                            ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } },
+                            suggestedMin: 1000,
+                            suggestedMax: 1400
+                        },
+                        x: {
+                            title: { display: true, text: 'Fecha y Hora (Mediciones c/6h)', color: '#64748b', font: { size: 11 } },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
                         }
                     }
                 }
             });
+
+            actualizarTablaYKPIs(proyeccionPromedio);
         }
 
-        function updateChartData() {
-            if (!hydroChart) return;
-            const activeData = getActiveData();
-            const spline = createSpline(activeData);
+        // Update UI components (KPIs and Table)
+        function actualizarTablaYKPIs(proyeccionPromedio) {
+            // Aggregate all points
+            const todosPuntos = [
+                ...datasetHistorico,
+                ...datasetProyeccionT.map((p, i) => ({
+                    fecha: p.fecha,
+                    t: p.t,
+                    caudal: proyeccionPromedio[i],
+                    esProyeccion: true
+                }))
+            ];
 
-            const densePoints = [];
-            for (let t = 0; t <= 36; t += 0.2) {
-                densePoints.push({ x: Number(t.toFixed(1)), y: Number(spline(t).toFixed(2)) });
-            }
-            const dataPoints = activeData.map(d => ({ x: d.t, y: d.q }));
-
-            hydroChart.data.datasets[0].data = densePoints;
-            hydroChart.data.datasets[1].data = dataPoints;
-            hydroChart.data.datasets[2].data = [{ x: currentTime, y: spline(currentTime) }];
-            hydroChart.update('none');
-        }
-
-        const simCanvas = document.getElementById('riverSimulationCanvas');
-        const simCtx = simCanvas.getContext('2d');
-
-        function initParticles() {
-            particles = [];
-            for (let i = 0; i < numParticles; i++) {
-                particles.push({
-                    x: Math.random(),
-                    y: Math.random(),
-                    size: Math.random() * 3 + 1.5,
-                    speedFactor: Math.random() * 0.5 + 0.75,
-                    opacity: Math.random() * 0.5 + 0.3
-                });
-            }
-        }
-
-        function resizeCanvas() {
-            const rect = simCanvas.getBoundingClientRect();
-            simCanvas.width = rect.width * window.devicePixelRatio;
-            simCanvas.height = rect.height * window.devicePixelRatio;
-            simCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        }
-
-        function drawRiverSimulation(Q, depth, velocity) {
-            const w = simCanvas.clientWidth;
-            const h = simCanvas.clientHeight;
-
-            simCtx.clearRect(0, 0, w, h);
-
-            // Channel Bed profile (Cross section cut)
-            const bedMarginLeft = w * 0.1;
-            const bedMarginRight = w * 0.9;
-            const bedBottom = h - 35;
-            const bedTop = 40;
-
-            // Compute depth visually (scale 0-6m depth to canvas pixels)
-            const maxDepthMeters = 6.0;
-            const pixelDepth = Math.min((depth / maxDepthMeters) * (bedBottom - bedTop - 30), bedBottom - bedTop - 10);
-            const waterSurfaceY = bedBottom - pixelDepth;
-
-            // Draw River Channel Cross-Section
-            simCtx.beginPath();
-            simCtx.moveTo(bedMarginLeft - 20, bedTop);
-            simCtx.lineTo(bedMarginLeft, bedBottom);
-            simCtx.lineTo(bedMarginRight, bedBottom);
-            simCtx.lineTo(bedMarginRight + 20, bedTop);
-            simCtx.lineTo(w, bedTop);
-            simCtx.lineTo(w, h);
-            simCtx.lineTo(0, h);
-            simCtx.lineTo(0, bedTop);
-            simCtx.closePath();
-
-            simCtx.fillStyle = '#1e293b';
-            simCtx.fill();
-            simCtx.strokeStyle = '#475569';
-            simCtx.lineWidth = 2;
-            simCtx.stroke();
-
-            // Draw Water Mass
-            const grad = simCtx.createLinearGradient(0, waterSurfaceY, 0, bedBottom);
-            grad.addColorStop(0, 'rgba(14, 165, 233, 0.85)');
-            grad.addColorStop(1, 'rgba(3, 105, 161, 0.95)');
-
-            simCtx.beginPath();
-            simCtx.moveTo(bedMarginLeft, bedBottom);
-            simCtx.lineTo(bedMarginLeft - (pixelDepth * 0.3), waterSurfaceY);
+            // KPIs
+            const caudalesHistoricos = datasetHistorico.map(d => d.caudal);
+            const maxCaudal = Math.max(...caudalesHistoricos);
+            const avgCaudal = (caudalesHistoricos.reduce((a, b) => a + b, 0) / caudalesHistoricos.length).toFixed(2);
             
-            // Dynamic Wave Effect on surface
-            const waveTime = Date.now() * 0.003 * (velocity / 2);
-            for (let x = bedMarginLeft - (pixelDepth * 0.3); x <= bedMarginRight + (pixelDepth * 0.3); x += 10) {
-                const waveY = waterSurfaceY + Math.sin(x * 0.05 + waveTime) * 2;
-                simCtx.lineTo(x, waveY);
-            }
+            const volInfo = calcularVolumenAcumulado(datasetHistorico);
 
-            simCtx.lineTo(bedMarginRight + (pixelDepth * 0.3), waterSurfaceY);
-            simCtx.lineTo(bedMarginRight, bedBottom);
-            simCtx.closePath();
+            document.getElementById('kpiMax').innerText = maxCaudal.toFixed(2);
+            document.getElementById('kpiAvg').innerText = avgCaudal;
+            document.getElementById('kpiVol').innerText = volInfo.volHm3.toFixed(2);
+            document.getElementById('kpiVolM3').innerText = `${volInfo.volTotalM3.toLocaleString('es-CO', { maximumFractionDigits: 0 })} mÂ³ procesados`;
 
-            simCtx.fillStyle = grad;
-            simCtx.fill();
-
-            // Draw Floating Particles / Flow Vectors
-            simCtx.save();
-            // Clip to water area
-            simCtx.clip();
-
-            particles.forEach(p => {
-                // Particle motion proportional to velocity V
-                p.x += (velocity * 0.002 * p.speedFactor);
-                if (p.x > 1.0) p.x = 0.0;
-
-                const px = bedMarginLeft + p.x * (bedMarginRight - bedMarginLeft);
-                const py = waterSurfaceY + p.y * (bedBottom - waterSurfaceY - 5);
-
-                simCtx.fillStyle = `rgba(224, 242, 254, ${p.opacity})`;
-                simCtx.beginPath();
-                simCtx.arc(px, py, p.size, 0, Math.PI * 2);
-                simCtx.fill();
-
-                // Small velocity streak line
-                simCtx.strokeStyle = `rgba(186, 230, 253, ${p.opacity * 0.6})`;
-                simCtx.lineWidth = 1;
-                simCtx.beginPath();
-                simCtx.moveTo(px, py);
-                simCtx.lineTo(px - velocity * 4 * p.speedFactor, py);
-                simCtx.stroke();
-            });
-
-            simCtx.restore();
-
-            // Draw Scale Gauge on left side
-            simCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            simCtx.lineWidth = 1;
-            simCtx.beginPath();
-            simCtx.moveTo(bedMarginLeft - 35, bedBottom);
-            simCtx.lineTo(bedMarginLeft - 35, bedBottom - (5 / maxDepthMeters) * (bedBottom - bedTop - 30));
-            simCtx.stroke();
-
-            simCtx.fillStyle = '#94a3b8';
-            simCtx.font = '10px Inter';
-            for (let m = 0; m <= 5; m++) {
-                const tickY = bedBottom - (m / maxDepthMeters) * (bedBottom - bedTop - 30);
-                simCtx.fillText(`${m}m`, bedMarginLeft - 58, tickY + 3);
-            }
-        }
-
-        function updateUI() {
-            const activeData = getActiveData();
-            const spline = createSpline(activeData);
-
-            // Instant Q
-            const qNow = spline(currentTime);
-            const depth = solveDepth(qNow, hydraulicParams.B, hydraulicParams.n, hydraulicParams.S);
-            const area = hydraulicParams.B * depth;
-            const perimeter = hydraulicParams.B + 2 * depth;
-            const velocity = qNow / area;
-
-            // Trend dQ/dt (approx numerical derivative)
-            const dtStep = 0.1;
-            const qPrev = spline(Math.max(0, currentTime - dtStep));
-            const dqdt = (qNow - qPrev) / dtStep; // mÂ³/s por hora
-
-            // Volume accumulated up to currentTime
-            const volM3 = calculateCumulativeVolume(currentTime);
-            const volHm3 = volM3 / 1e6;
-
-            // Update DOM Cards
-            document.getElementById('kpiQ').innerText = qNow.toFixed(2);
-            document.getElementById('kpiDepth').innerText = depth.toFixed(2);
-            document.getElementById('kpiVelocity').innerText = velocity.toFixed(2);
-            document.getElementById('kpiVolume').innerText = volHm3.toFixed(2);
-            document.getElementById('currentTimeDisplay').innerText = currentTime.toFixed(1) + ' h';
-            document.getElementById('timeSlider').value = currentTime;
-
-            // Trend Badge
-            const qTrendBadge = document.getElementById('qTrendBadge');
-            if (Math.abs(dqdt) < 0.5) {
-                qTrendBadge.className = "px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono";
-                qTrendBadge.innerHTML = `<i class="fa-solid fa-minus text-slate-400 mr-1"></i> Estacionario`;
-            } else if (dqdt > 0) {
-                qTrendBadge.className = "px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20";
-                qTrendBadge.innerHTML = `<i class="fa-solid fa-arrow-trend-up text-emerald-400 mr-1"></i>+${dqdt.toFixed(1)} mÂ³/sÂ·h`;
+            // Risk Assessment
+            const maxProyectado = Math.max(...proyeccionPromedio);
+            const kpiRiskEl = document.getElementById('kpiRisk');
+            if (maxProyectado > 1400) {
+                kpiRiskEl.innerText = "ALERTA ROJA (>1400 mÂ³/s)";
+                kpiRiskEl.className = "text-xl font-bold text-red-500 animate-pulse";
+            } else if (maxProyectado > 1250) {
+                kpiRiskEl.innerText = "ALERTA NARANJA (>1250 mÂ³/s)";
+                kpiRiskEl.className = "text-xl font-bold text-amber-400";
             } else {
-                qTrendBadge.className = "px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono border border-amber-500/20";
-                qTrendBadge.innerHTML = `<i class="fa-solid fa-arrow-trend-down text-amber-400 mr-1"></i>${dqdt.toFixed(1)} mÂ³/sÂ·h`;
+                kpiRiskEl.innerText = "NORMAL / PREVENTIVA";
+                kpiRiskEl.className = "text-xl font-bold text-emerald-400";
             }
 
-            // Canvas Overlay Metrics
-            document.getElementById('canvasArea').innerText = `${area.toFixed(1)} mÂ²`;
-            document.getElementById('canvasPerimeter').innerText = `${perimeter.toFixed(1)} m`;
-
-            // Global Statistics
-            const qVals = activeData.map(d => d.q);
-            const qMin = Math.min(...qVals);
-            const qMax = Math.max(...qVals);
-            const qAvg = qVals.reduce((a, b) => a + b, 0) / qVals.length;
-            const totalVol36 = calculateCumulativeVolume(36) / 1e6;
-
-            document.getElementById('statQMin').innerText = `${qMin.toFixed(2)} mÂ³/s`;
-            document.getElementById('statQMax').innerText = `${qMax.toFixed(2)} mÂ³/s`;
-            document.getElementById('statQAvg').innerText = `${qAvg.toFixed(2)} mÂ³/s`;
-            document.getElementById('statVolTotal').innerText = `${totalVol36.toFixed(2)} HmÂ³`;
-
-            // Chart Indicator Update
-            if (hydroChart) {
-                hydroChart.data.datasets[2].data = [{ x: currentTime, y: qNow }];
-                hydroChart.update('none');
-            }
-
-            // Redraw River Canvas
-            drawRiverSimulation(qNow, depth, velocity);
-        }
-
-        function populateTable() {
+            // Populate Table
             const tbody = document.getElementById('dataTableBody');
             tbody.innerHTML = '';
 
-            const activeData = getActiveData();
-            let cumVol = 0;
-            let sumQ = 0;
+            // Compute segment volumes for all
+            const volAllInfo = calcularVolumenAcumulado(todosPuntos);
 
-            for (let i = 0; i < activeData.length; i++) {
-                const d = activeData[i];
-                sumQ += d.q;
-
-                let dtSec = 0;
-                let segVol = 0;
-
-                if (i > 0) {
-                    const prev = activeData[i - 1];
-                    const dtHours = d.t - prev.t;
-                    dtSec = dtHours * 3600;
-                    segVol = 0.5 * (prev.q + d.q) * dtSec; // Trapezoid
-                    cumVol += segVol;
-                }
-
+            todosPuntos.forEach((p, idx) => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/40 transition";
+                tr.className = p.esProyeccion ? "bg-amber-950/20 text-amber-200/90" : "hover:bg-slate-800/40";
+
+                const volSeg = idx > 0 ? volAllInfo.detallesSegmento[idx - 1].toFixed(3) : '-';
+                const tagTipo = p.esProyeccion 
+                    ? '<span class="px-2 py-0.5 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded">Simulado</span>' 
+                    : '<span class="px-2 py-0.5 text-[10px] bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded">Medido</span>';
+
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-white">${d.t.toFixed(0)} h</td>
-                    <td class="p-3 text-blue-400 font-bold">${d.q.toFixed(2)}</td>
-                    <td class="p-3 text-slate-400">${dtSec > 0 ? dtSec.toLocaleString() : '0'} s</td>
-                    <td class="p-3 text-slate-300">${segVol > 0 ? segVol.toLocaleString(undefined, {maximumFractionDigits: 0}) : '-'}</td>
-                    <td class="p-3 text-emerald-400 font-bold">${(cumVol / 1e6).toFixed(2)} HmÂ³</td>
+                    <td class="py-2 px-3 font-sans font-medium">${p.fecha}</td>
+                    <td class="py-2 px-3 text-slate-400">${p.t} h</td>
+                    <td class="py-2 px-3">${tagTipo}</td>
+                    <td class="py-2 px-3 text-right font-bold ${p.esProyeccion ? 'text-amber-400' : 'text-sky-300'}">${p.caudal.toFixed(2)}</td>
+                    <td class="py-2 px-3 text-right text-slate-400">${volSeg}</td>
                 `;
                 tbody.appendChild(tr);
-            }
-
-            const avgQ = sumQ / activeData.length;
-            const totalVol36m3 = calculateCumulativeVolume(36);
-            
-            document.getElementById('tableAvgQ').innerText = `${avgQ.toFixed(2)} mÂ³/s`;
-            document.getElementById('tableTotalM3').innerText = `${Math.round(totalVol36m3).toLocaleString()} mÂ³`;
-            document.getElementById('tableTotalHm3').innerText = `${(totalVol36m3 / 1e6).toFixed(2)} HmÂ³`;
-        }
-
-        function togglePlay() {
-            isPlaying = !isPlaying;
-            const playBtn = document.getElementById('playBtn');
-            const playIcon = document.getElementById('playIcon');
-            const playText = document.getElementById('playText');
-
-            if (isPlaying) {
-                playIcon.className = 'fa-solid fa-pause';
-                playText.innerText = 'Pausar';
-                playBtn.className = "px-5 py-2.5 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-semibold rounded-xl transition flex items-center gap-2 shadow-lg shadow-amber-600/30";
-                animateLoop();
-            } else {
-                playIcon.className = 'fa-solid fa-play';
-                playText.innerText = 'Continuar';
-                playBtn.className = "px-5 py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold rounded-xl transition flex items-center gap-2 shadow-lg shadow-blue-600/30";
-                if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            }
-        }
-
-        function animateLoop() {
-            if (!isPlaying) return;
-
-            currentTime += 0.05;
-            if (currentTime > 36) {
-                currentTime = 0;
-            }
-
-            updateUI();
-            animationFrameId = requestAnimationFrame(animateLoop);
-        }
-
-        function setupEventListeners() {
-            document.getElementById('playBtn').addEventListener('click', togglePlay);
-
-            document.getElementById('resetBtn').addEventListener('click', () => {
-                isPlaying = false;
-                if (animationFrameId) cancelAnimationFrame(animationFrameId);
-                currentTime = 0;
-                document.getElementById('playIcon').className = 'fa-solid fa-play';
-                document.getElementById('playText').innerText = 'Iniciar SimulaciÃ³n';
-                document.getElementById('playBtn').className = "px-5 py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold rounded-xl transition flex items-center gap-2 shadow-lg shadow-blue-600/30";
-                updateUI();
-            });
-
-            document.getElementById('timeSlider').addEventListener('input', (e) => {
-                currentTime = parseFloat(e.target.value);
-                updateUI();
-            });
-
-            document.getElementById('scenarioSelect').addEventListener('change', (e) => {
-                currentScenario = e.target.value;
-                updateChartData();
-                populateTable();
-                updateUI();
-            });
-
-            // Hydraulic Sliders
-            document.getElementById('paramB').addEventListener('input', (e) => {
-                hydraulicParams.B = parseFloat(e.target.value);
-                document.getElementById('paramBVal').innerText = `${hydraulicParams.B} m`;
-                updateUI();
-            });
-
-            document.getElementById('paramN').addEventListener('input', (e) => {
-                hydraulicParams.n = parseFloat(e.target.value);
-                document.getElementById('paramNVal').innerText = hydraulicParams.n.toFixed(3);
-                updateUI();
-            });
-
-            document.getElementById('paramS').addEventListener('input', (e) => {
-                hydraulicParams.S = parseFloat(e.target.value);
-                document.getElementById('paramSVal').innerText = `${hydraulicParams.S.toFixed(4)} m/m`;
-                updateUI();
-            });
-
-            // CSV Export
-            document.getElementById('exportCsvBtn').addEventListener('click', () => {
-                const activeData = getActiveData();
-                let csvContent = "data:text/csv;charset=utf-8,Tiempo_h,Caudal_m3s\n";
-                activeData.forEach(d => {
-                    csvContent += `${d.t},${d.q.toFixed(2)}\n`;
-                });
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "hidrograma_rio_cauca.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-                updateUI();
             });
         }
 
-        window.onload = function () {
-            initParticles();
-            resizeCanvas();
-            initChart();
-            populateTable();
-            setupEventListeners();
-            updateUI();
+        // Helper Functions
+        function descargarGrafica() {
+            if (!chartInstance) return;
+            const link = document.createElement('a');
+            link.download = 'hidrograma-rio-cauca-la-virginia.png';
+            link.href = chartInstance.toBase64Image();
+            link.click();
+        }
+
+        function exportarCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Fecha,Tiempo_h,Tipo,Caudal_m3s\n";
+            datasetHistorico.forEach(d => {
+                csvContent += `${d.fecha},${d.t},Historico,${d.caudal}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'datos_caudal_la_virginia.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function resetearDatos() {
+            document.getElementById('noiseInput').value = 55;
+            document.getElementById('noiseVal').innerText = "55";
+            document.getElementById('modelSelect').value = "polynomial";
+            document.getElementById('mcRuns').value = 10;
+            document.getElementById('mcRunsVal').innerText = "10 trayectorias";
+            document.getElementById('chkLinearInterpolation').checked = true;
+            document.getElementById('chkPolyFit').checked = true;
+            document.getElementById('chkConfidenceBand').checked = true;
+            ejecutarSimulacion();
+        }
+
+        // Initial launch on load
+        window.onload = function() {
+            ejecutarSimulacion();
         };
     </script>
 </body>
